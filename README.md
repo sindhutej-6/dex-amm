@@ -1,9 +1,9 @@
 # DEX AMM Project
 
 ## Overview
-This project implements a simplified Decentralized Exchange (DEX) using the Automated Market Maker (AMM) model, inspired by Uniswap V2. The DEX allows users to add and remove liquidity, swap between two ERC-20 tokens, and earn trading fees as liquidity providers, all without intermediaries.
+This project implements a simplified Decentralized Exchange (DEX) using an Automated Market Maker (AMM) model similar to Uniswap V2. It enables decentralized token trading without order books or centralized intermediaries. Users can add liquidity, remove liquidity, swap tokens, and earn trading fees as liquidity providers.
 
-The exchange follows a constant product formula (x * y = k) to determine token prices and ensure continuous liquidity.
+The DEX uses the constant product formula (x * y = k) to determine prices and ensure continuous liquidity.
 
 ---
 
@@ -11,33 +11,28 @@ The exchange follows a constant product formula (x * y = k) to determine token p
 - Initial and subsequent liquidity provision
 - Liquidity removal with proportional share calculation
 - Token swaps using constant product formula (x * y = k)
-- 0.3% trading fee distributed to liquidity providers
-- LP token accounting using internal liquidity mapping
-- Fully tested with 25+ Hardhat test cases
-- Dockerized environment for consistent execution
+- 0.3% trading fee for liquidity providers
+- LP token minting and burning via internal liquidity accounting
 
 ---
 
 ## Architecture
-The project consists of the following components:
+The system consists of the following components:
 
 - **DEX.sol**  
-  Core AMM smart contract that manages liquidity pools, swaps, pricing, and fee distribution.
+  Core smart contract implementing liquidity pools, swaps, pricing logic, and fee distribution.
 
 - **MockERC20.sol**  
   Simple ERC-20 token contract used for testing purposes.
 
-- **DEX.test.js**  
-  Comprehensive test suite validating liquidity management, swaps, fees, prices, events, and edge cases.
-
-The DEX contract tracks reserves internally and updates them after each liquidity or swap operation to maintain consistency.
+The DEX contract internally tracks token reserves and liquidity shares. Liquidity providers are issued proportional LP balances, which represent ownership of the pool. All swaps and liquidity actions update reserves explicitly to maintain consistency.
 
 ---
 
 ## Mathematical Implementation
 
 ### Constant Product Formula
-The AMM uses the invariant:
+The DEX follows the invariant:
 
 x * y = k
 
@@ -45,16 +40,17 @@ yaml
 Copy code
 
 Where:
-- x = reserve of Token A  
-- y = reserve of Token B  
-- k = constant value
+- `x` = reserve of Token A  
+- `y` = reserve of Token B  
+- `k` = constant product
 
-After each swap, k remains the same or increases slightly due to fees retained in the pool.
+After every swap, the product of reserves remains constant or increases slightly due to fees retained in the pool.
 
 ---
 
 ### Fee Calculation
-A 0.3% trading fee is applied to every swap.
+Each swap applies a **0.3% trading fee**.  
+Only **99.7%** of the input amount is used in the swap calculation.
 
 Formula used:
 
@@ -66,7 +62,7 @@ amountOut = numerator / denominator
 yaml
 Copy code
 
-The fee remains in the pool, increasing total liquidity and benefiting liquidity providers.
+The deducted fee remains in the pool, increasing total liquidity and benefiting liquidity providers.
 
 ---
 
@@ -80,10 +76,11 @@ liquidityMinted = sqrt(amountA * amountB)
 sql
 Copy code
 
-The first provider sets the initial price.
+The first provider sets the initial price of the pool.
 
 #### Subsequent Liquidity
-Liquidity must match the existing reserve ratio:
+Liquidity must match the existing reserve ratio.  
+LP tokens are minted proportionally:
 
 liquidityMinted = (amountA * totalLiquidity) / reserveA
 
@@ -95,8 +92,7 @@ Copy code
 ## Setup Instructions
 
 ### Prerequisites
-- Node.js (v18+ recommended)
-- Docker & Docker Compose
+- Docker and Docker Compose installed
 - Git
 
 ---
@@ -132,40 +128,42 @@ Stop Docker:
 bash
 Copy code
 docker-compose down
-Running Tests Locally (Without Docker)
+Running Tests Locally (without Docker)
 bash
 Copy code
 npm install
-npx hardhat compile
-npx hardhat test
+npm run compile
+npm test
 Contract Addresses
-Not deployed to a public testnet. Deployment can be done using:
+This project is not deployed to a public testnet.
+Deployment can be performed using:
 
 bash
 Copy code
 npm run deploy
 Known Limitations
-Supports only a single token pair
+Supports only a single trading pair
 
 No slippage protection (minAmountOut)
 
 No deadline parameter for transactions
 
-No flash swap functionality
+No flash swaps
 
-These features can be added as enhancements.
+These features can be added as future enhancements.
 
 Security Considerations
-Reentrancy protection using OpenZeppelin’s ReentrancyGuard
+Solidity 0.8+ built-in overflow and underflow protection
 
 Input validation for zero values and insufficient liquidity
 
-Safe ERC-20 transfers via IERC20 interface
+Explicit reserve tracking to avoid balance desynchronization
 
-Solidity 0.8+ built-in overflow and underflow checks
+Reentrancy-safe design (no external calls before state updates)
 
-Reserves updated explicitly to avoid balance desynchronization
+Use of OpenZeppelin ERC-20 implementation for token safety
 
-Conclusion
-This project demonstrates a complete AMM-based DEX with correct mathematical modeling, fee distribution, and extensive test coverage. It provides a strong foundation for understanding DeFi liquidity pools and decentralized trading mechanisms.
+yaml
+Copy code
+
 ```
